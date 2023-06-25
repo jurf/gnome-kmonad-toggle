@@ -4,7 +4,7 @@
   "uuid": "kmonad-toggle@jurf.github.io",
   "shell-version": ["44"],
   "settings-schema": "org.gnome.shell.extensions.kmonad-toggle",
-  "url": "https://github.com/jurf/gnome-shell-extension-kmonad-toggle",
+  "url": "https://github.com/jurf/gnome-kmonad-toggle",
   "donations": {
     "kofi": "jurajfiala"
   }
