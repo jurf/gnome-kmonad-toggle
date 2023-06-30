@@ -245,7 +245,7 @@ function execCommunicate(argv, input = null, cancellable = null) {
  * @returns {object} an object with enable() and disable() methods
  */
 function init(meta) {
-    ExtensionUtils.initTranslations(meta.uuid);
+    ExtensionUtils.initTranslations();
 
     return new Extension(meta.uuid);
 }

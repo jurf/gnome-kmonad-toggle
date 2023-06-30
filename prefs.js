@@ -28,11 +28,9 @@ const _ = ExtensionUtils.gettext;
 
 /**
  * Like `extension.js` this is used for any one-time setup like translations.
- *
- * @param {ExtensionMeta} meta - An extension meta object
  */
-function init(meta) {
-    ExtensionUtils.initTranslations(meta.uuid);
+function init() {
+    ExtensionUtils.initTranslations();
 }
 
 /**
