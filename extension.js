@@ -31,9 +31,6 @@ const _ = ExtensionUtils.gettext;
 // This is the live instance of the Quick Settings menu
 const QuickSettingsMenu = imports.ui.main.panel.statusArea.quickSettings;
 
-let loop = GLib.MainLoop.new(null, false);
-
-
 const KMonadToggle = GObject.registerClass(
   class FeatureToggle extends QuickSettings.QuickToggle {
       _init() {
@@ -127,7 +124,7 @@ class Extension {
         this._indicator = null;
 
         this._settings = ExtensionUtils.getSettings();
-        this._kmonad_process = null;
+        this._cancellable = new Gio.Cancellable();
 
         // Watch for changes to a specific setting
         this._settings.connect('changed::enable-kmonad', (settings, key) => {
@@ -135,7 +132,7 @@ class Extension {
             if (isEnabled)
                 this.startKmonad();
             else
-                this.stopKmonad();
+                this._cancellable.cancel();
         });
     }
 
@@ -170,53 +167,72 @@ class Extension {
      * Starts the kmonad process
      */
     startKmonad() {
-        if (this._kmonad_process) {
-            console.warn('Kmonad already running; restarting');
-            this.stopKmonad();
-        }
-        try {
-            const command = GLib.shell_parse_argv(
-                this._settings.get_string('kmonad-command')
-            )[1];
-            this._kmonad_process = Gio.Subprocess.new(
-                command,
-                Gio.SubprocessFlags.STDOUT_PIPE | Gio.SubprocessFlags.STDERR_PIPE
-            );
-
-            this._kmonad_process.communicate_utf8_async(null, null, (proc, res) => {
-                try {
-                    let [, stdout, stderr] = proc.communicate_utf8_finish(res);
-
-                    if (proc.get_successful())
-                        log(stdout);
-                    else
-                        throw new Error(stderr);
-                } catch (e) {
+        this._cancellable.cancel();
+        this._cancellable.reset();
+        const command = GLib.shell_parse_argv(
+            this._settings.get_string('kmonad-command')
+        )[1];
+        execCommunicate(command, null, this._cancellable)
+                .catch(e => {
                     logError(e);
-                } finally {
-                    loop.quit();
-                    this._kmonad_process = null;
+                })
+                .then(() => {
                     this._settings.set_boolean('enable-kmonad', false);
-                }
-            });
-        } catch (e) {
-            logError(e);
-        }
+                });
     }
+}
 
-    /**
-     * Starts the kmonad process
-     */
-    stopKmonad() {
-        if (this._kmonad_process) {
+/**
+ * Execute a command asynchronously and return the output from `stdout` on
+ * success or throw an error with output from `stderr` on failure.
+ *
+ * If given, @input will be passed to `stdin` and @cancellable can be used to
+ * stop the process before it finishes.
+ *
+ * @param {string[]} argv - a list of string arguments
+ * @param {string} [input] - Input to write to `stdin` or %null to ignore
+ * @param {Gio.Cancellable} [cancellable] - optional cancellable object
+ * @returns {Promise<string>} - The process output
+ */
+function execCommunicate(argv, input = null, cancellable = null) {
+    let cancelId = 0;
+    let flags = Gio.SubprocessFlags.STDOUT_PIPE | Gio.SubprocessFlags.STDERR_PIPE;
+
+    if (input !== null)
+        flags |= Gio.SubprocessFlags.STDIN_PIPE;
+
+    let proc = new Gio.Subprocess({
+        argv,
+        flags,
+    });
+    proc.init(cancellable);
+
+    if (cancellable instanceof Gio.Cancellable)
+        cancelId = cancellable.connect(() => proc.force_exit());
+
+
+    return new Promise((resolve, reject) => {
+        proc.communicate_utf8_async(input, null, (proc_, res) => {
             try {
-                this._kmonad_process.force_exit();
+                let [, stdout, stderr] = proc_.communicate_utf8_finish(res);
+                let status = proc_.get_exit_status();
+
+                if (status !== 0) {
+                    throw new Gio.IOErrorEnum({
+                        code: Gio.io_error_from_errno(status),
+                        message: stderr ? stderr.trim() : GLib.strerror(status),
+                    });
+                }
+
+                resolve(stdout.trim());
             } catch (e) {
-                logError(e);
+                reject(e);
+            } finally {
+                if (cancelId > 0)
+                    cancellable.disconnect(cancelId);
             }
-            this._kmonad_process = null;
-        }
-    }
+        });
+    });
 }
 
 /**
