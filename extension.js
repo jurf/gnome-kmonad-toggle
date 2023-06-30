@@ -145,9 +145,8 @@ class Extension {
      */
     enable() {
         this._indicator = new KMonadIndicator();
-        // TODO: Does this need to be set to false first?
-        this._settings.set_boolean('enable-kmonad', false);
-        this._settings.set_boolean('enable-kmonad', true);
+        if (this._settings.get_boolean('enable-kmonad'))
+            this.startKmonad();
     }
 
     /**

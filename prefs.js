@@ -20,7 +20,7 @@
 
 'use strict';
 
-const {Adw, Gio} = imports.gi;
+const {Adw, Gio, Gtk} = imports.gi;
 
 const ExtensionUtils = imports.misc.extensionUtils;
 
@@ -47,30 +47,44 @@ function init(meta) {
 function fillPreferencesWindow(window) {
     const settings = ExtensionUtils.getSettings();
 
-    // Create a preferences page, with a single group
     const page = new Adw.PreferencesPage();
     window.add(page);
 
     const group = new Adw.PreferencesGroup({
-        title: _('KMonad configuration'),
         description: _(
             'This extension does not manage the KMonad installation.' +
-        ' See the <a href="https://github.com/kmonad/kmonad/blob/master/doc/installation.md">Installation guide</a>' +
-        ' and <a href="https://github.com/kmonad/kmonad/blob/master/doc/faq.md">FAQ</a>' +
-        ' for instructions on how to set it up.' +
-        '\n\n' +
-        'Note: shell expansion is not supported, so please use absolute paths.'
+            ' See the <a href="https://github.com/kmonad/kmonad/blob/master/doc/installation.md">Installation guide</a>' +
+            ' and <a href="https://github.com/kmonad/kmonad/blob/master/doc/faq.md">FAQ</a>' +
+            ' for instructions on how to set it up.'
         ),
     });
     page.add(group);
 
-    // Create a new preferences row
+    const enabledRow = new Adw.ActionRow({title: _('Enable KMonad')});
+    group.add(enabledRow);
+
+    const toggle = new Gtk.Switch({
+        active: settings.get_boolean('enable-kmonad'),
+        valign: Gtk.Align.CENTER,
+    });
+    settings.bind('enable-kmonad', toggle, 'active',
+        Gio.SettingsBindFlags.DEFAULT);
+    enabledRow.add_suffix(toggle);
+    enabledRow.activatable_widget = toggle;
+
+    const kmonadGroup = new Adw.PreferencesGroup({
+        title: _('KMonad configuration'),
+        description: _(
+            'Shell expansion is not supported, so please use absolute paths.'
+        ),
+    });
+    page.add(kmonadGroup);
+
     const row = new Adw.EntryRow({
         title: _('Custom command'),
         text: settings.get_string('kmonad-command'),
     });
-    group.add(row);
-
+    kmonadGroup.add(row);
     settings.bind('kmonad-command', row, 'text', Gio.SettingsBindFlags.DEFAULT);
 
     // Make sure the window doesn't outlive the settings object
