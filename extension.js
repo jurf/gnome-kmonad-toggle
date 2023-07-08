@@ -47,7 +47,7 @@ const KMonadToggle = GObject.registerClass(
           this._settings = ExtensionUtils.getSettings();
 
           this._settings.bind(
-              'enable-kmonad',
+              'kmonad-running',
               this,
               'checked',
               Gio.SettingsBindFlags.DEFAULT
@@ -69,7 +69,7 @@ const KMonadIndicator = GObject.registerClass(
           this._settings = ExtensionUtils.getSettings();
 
           this._settings.bind(
-              'enable-kmonad',
+              'kmonad-running',
               this._indicator,
               'visible',
               Gio.SettingsBindFlags.DEFAULT
@@ -127,7 +127,7 @@ class Extension {
         this._cancellable = new Gio.Cancellable();
 
         // Watch for changes to a specific setting
-        this._settings.connect('changed::enable-kmonad', (settings, key) => {
+        this._settings.connect('changed::kmonad-running', (settings, key) => {
             const isEnabled = settings.get_boolean(key);
             if (isEnabled)
                 this.startKmonad();
@@ -145,8 +145,8 @@ class Extension {
      */
     enable() {
         this._indicator = new KMonadIndicator();
-        if (this._settings.get_boolean('enable-kmonad'))
-            this.startKmonad();
+        if (this._settings.get_boolean('autostart-kmonad'))
+            this._settings.set_boolean('kmonad-running', true);
     }
 
     /**
@@ -159,7 +159,7 @@ class Extension {
     disable() {
         this._indicator.destroy();
         this._indicator = null;
-        this._settings.set_boolean('enable-kmonad', false);
+        this._cancellable.cancel();
     }
 
     /**
@@ -176,7 +176,7 @@ class Extension {
                     logError(e);
                 })
                 .then(() => {
-                    this._settings.set_boolean('enable-kmonad', false);
+                    this._settings.set_boolean('kmonad-running', false);
                 });
     }
 }

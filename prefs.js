@@ -58,17 +58,8 @@ function fillPreferencesWindow(window) {
     });
     page.add(group);
 
-    const enabledRow = new Adw.ActionRow({title: _('Enable KMonad')});
-    group.add(enabledRow);
-
-    const toggle = new Gtk.Switch({
-        active: settings.get_boolean('enable-kmonad'),
-        valign: Gtk.Align.CENTER,
-    });
-    settings.bind('enable-kmonad', toggle, 'active',
-        Gio.SettingsBindFlags.DEFAULT);
-    enabledRow.add_suffix(toggle);
-    enabledRow.activatable_widget = toggle;
+    group.add(createSettingsToggle(settings, 'kmonad-running', 'Start KMonad now'));
+    group.add(createSettingsToggle(settings, 'autostart-kmonad', 'Autostart KMonad'));
 
     const kmonadGroup = new Adw.PreferencesGroup({
         title: _('KMonad configuration'),
@@ -78,13 +69,50 @@ function fillPreferencesWindow(window) {
     });
     page.add(kmonadGroup);
 
-    const row = new Adw.EntryRow({
-        title: _('Custom command'),
-        text: settings.get_string('kmonad-command'),
-    });
-    kmonadGroup.add(row);
-    settings.bind('kmonad-command', row, 'text', Gio.SettingsBindFlags.DEFAULT);
+    kmonadGroup.add(createSettingsEntry(settings, 'kmonad-command', 'Custom command'));
 
     // Make sure the window doesn't outlive the settings object
     window._settings = settings;
+}
+
+/**
+ * Creates an Adw.ActionRow with a Gtk.Switch and binds it to a boolean key in
+ * the settings object.
+ *
+ * @param {Gio.Settings} settings - The settings object
+ * @param {string} key - The key to bind to
+ * @param {string} title - The title of the row
+ * @returns {Adw.ActionRow} The row
+ */
+function createSettingsToggle(settings, key, title) {
+    const row = new Adw.ActionRow({title: _(title)});
+
+    const toggle = new Gtk.Switch({
+        active: settings.get_boolean(key),
+        valign: Gtk.Align.CENTER,
+    });
+    settings.bind(key, toggle, 'active',
+        Gio.SettingsBindFlags.DEFAULT);
+    row.add_suffix(toggle);
+    row.activatable_widget = toggle;
+
+    return row;
+}
+
+/**
+ * Creates an Adw.EntryRow and binds it to a string key in the settings object.
+ *
+ * @param {Gio.Settings} settings - The settings object
+ * @param {string} key - The key to bind to
+ * @param {string} title - The title of the row
+ * @returns {Adw.EntryRow} The row
+ */
+function createSettingsEntry(settings, key, title) {
+    const row = new Adw.EntryRow({
+        title: _(title),
+        text: settings.get_string(key),
+    });
+    settings.bind(key, row, 'text', Gio.SettingsBindFlags.DEFAULT);
+
+    return row;
 }

@@ -2,8 +2,11 @@
 <schemalist>
     <schema id="org.gnome.shell.extensions.kmonad-toggle" path="/org/gnome/shell/extensions/kmonad-toggle/">
         <!-- See also: https://docs.gtk.org/glib/gvariant-format-strings.html -->
-        <key name="enable-kmonad" type="b">
+        <key name="autostart-kmonad" type="b">
             <default>true</default>
+        </key>
+        <key name="kmonad-running" type="b">
+            <default>false</default>
         </key>
         <key name="kmonad-command" type="s">
             <default>"kmonad"</default>
