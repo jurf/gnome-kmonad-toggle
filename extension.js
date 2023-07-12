@@ -24,6 +24,7 @@ const {Gio, GLib, GObject} = imports.gi;
 
 const ExtensionUtils = imports.misc.extensionUtils;
 const Me = ExtensionUtils.getCurrentExtension();
+const Main = imports.ui.main;
 const QuickSettings = imports.ui.quickSettings;
 
 const _ = ExtensionUtils.gettext;
@@ -175,6 +176,7 @@ class Extension {
         execCommunicate(command, null, this._cancellable)
                 .catch(e => {
                     logError(e);
+                    Main.notifyError(_('KMonad failed to launch'), e.message.trim());
                 })
                 .then(() => {
                     this._settings.set_boolean('kmonad-running', false);
