@@ -1,6 +1,6 @@
 {
   "name": "KMonad Toggle",
-  "description": "Adds a KMonad toggle quick setting and indicator",
+  "description": "Control KMonad directly from GNOME Shell!",
   "uuid": "kmonad-toggle@jurf.github.io",
   "shell-version": ["44"],
   "settings-schema": "org.gnome.shell.extensions.kmonad-toggle",

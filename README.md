@@ -1,10 +1,17 @@
-[![ESLint](https://github.com/jurf/gnome-kmonad-toggle/actions/workflows/eslint.yml/badge.svg)](https://github.com/jurf/gnome-kmonad-toggle/actions/workflows/eslint.yml)
-
-# KMonad Toggle GNOME Shell Extension
-
 [![ko-fi](https://ko-fi.com/img/githubbutton_sm.svg)](https://ko-fi.com/L4L4J6WSK)
 
-GNOME Shell extension for adding a KMonad toggle quick setting and indicator. Allows you to control KMonad directly from GNOME Shell.
+# KMonad Toggle GNOME Shell Extension [![ESLint](https://github.com/jurf/gnome-kmonad-toggle/actions/workflows/eslint.yml/badge.svg)](https://github.com/jurf/gnome-kmonad-toggle/actions/workflows/eslint.yml)
+
+Control KMonad directly from GNOME Shell!
+
+This extension allows you to:
+
+- Autostart KMonad on login
+- Quickly check if KMonad is running from the top bar
+- Toggle KMonad on or off with a quick setting
+- Easily configure the KMonad launch command
+
+**Note**: This extension does not manage the KMonad installation.  See the [Installation guide][kmonad-installation] and [FAQ][kmonad-faq] for instructions on how to set it up.
 
 ## Installation
 
@@ -18,3 +25,5 @@ gnome-extensions install --force kmonad-toggle@jurf.github.io.shell-extension.zi
 ```
 
 [ego]: https://extensions.gnome.org/extension/6069/kmonad-toggle/
+[kmonad-installation]: https://github.com/kmonad/kmonad/blob/master/doc/installation.md
+[kmonad-faq]: https://github.com/kmonad/kmonad/blob/master/doc/faq.md
