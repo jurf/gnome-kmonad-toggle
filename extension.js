@@ -175,8 +175,10 @@ class Extension {
         )[1];
         execCommunicate(command, null, this._cancellable)
                 .catch(e => {
-                    logError(e);
-                    Main.notifyError(_('KMonad failed to launch'), e.message.trim());
+                    if (!this._cancellable.is_cancelled()) {
+                        logError(e);
+                        Main.notifyError(_('KMonad failed'), e.message.trim());
+                    }
                 })
                 .then(() => {
                     this._settings.set_boolean('kmonad-running', false);
