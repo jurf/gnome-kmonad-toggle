@@ -144,6 +144,7 @@ class Extension {
      * widgets, connect signals or modify GNOME Shell's behaviour.
      */
     enable() {
+        this._settings.set_boolean('kmonad-running', false);
         this._indicator = new KMonadIndicator();
         if (this._settings.get_boolean('autostart-kmonad'))
             this._settings.set_boolean('kmonad-running', true);
