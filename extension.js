@@ -84,7 +84,7 @@ const KMonadIndicator = GObject.registerClass(
           });
 
           // Add the indicator to the panel and the toggle to the menu
-          QuickSettingsMenu._indicators.add_child(this);
+          QuickSettingsMenu._indicators.insert_child_at_index(this, 0);
           addQuickSettingsItems(this.quickSettingsItems);
       }
   }
