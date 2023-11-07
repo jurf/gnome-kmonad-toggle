@@ -3,7 +3,7 @@
 # SPDX-FileCopyrightText: 2018 Claudio André <claudioandre.br@gmail.com>
 env:
   es2021: true
-extends: 'eslint:recommended'
+extends: "eslint:recommended"
 plugins:
   - jsdoc
 rules:
@@ -58,11 +58,11 @@ rules:
     - error
     - 4
     - ignoredNodes:
-      # Allow not indenting the body of GObject.registerClass, since in the
-      # future it's intended to be a decorator
-      - 'CallExpression[callee.object.name=GObject][callee.property.name=registerClass] > ClassExpression:first-child'
+        # Allow not indenting the body of GObject.registerClass, since in the
+        # future it's intended to be a decorator
+        - "CallExpression[callee.object.name=GObject][callee.property.name=registerClass] > ClassExpression:first-child"
       # Allow dedenting chained member expressions
-      MemberExpression: 'off'
+      MemberExpression: "off"
   jsdoc/check-alignment: error
   jsdoc/check-param-names: error
   jsdoc/check-tag-names: error
@@ -115,7 +115,7 @@ rules:
   no-implicit-coercion:
     - error
     - allow:
-      - '!!'
+        - "!!"
   no-invalid-this: error
   no-iterator: error
   no-label-var: error
@@ -126,7 +126,7 @@ rules:
   no-new-wrappers: error
   no-octal-escape: error
   no-proto: error
-  no-prototype-builtins: 'off'
+  no-prototype-builtins: "off"
   no-restricted-globals: [error, window]
   no-restricted-properties:
     - error
@@ -265,3 +265,4 @@ globals:
   clearInterval: readonly
 parserOptions:
   ecmaVersion: 2022
+  sourceType: module
