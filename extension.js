@@ -73,17 +73,16 @@ class FeatureIndicator extends QuickSettings.SystemIndicator {
 
 export default class KMonadToggleExtension extends Extension {
     enable() {
-        this._cancellable = new Gio.Cancellable();
-
         this._settings = this.getSettings();
         // Watch for changes to a specific setting
-        this._settings.connect('changed::kmonad-running', async (settings, key) => {
+        this._handlerId = this._settings.connect('changed::kmonad-running', async (settings, key) => {
             const isEnabled = settings.get_boolean(key);
             if (isEnabled) {
+                this._cancellable = new Gio.Cancellable();
                 await this.startKmonad();
-            } else {
+            } else if (this._cancellable) {
                 this._cancellable.cancel();
-                this._cancellable.reset();
+                this._cancellable = null;
             }
         });
 
@@ -91,17 +90,25 @@ export default class KMonadToggleExtension extends Extension {
         this._indicator.quickSettingsItems.push(new KMonadToggle(this, this.getIcon()));
         Main.panel.statusArea.quickSettings.addExternalIndicator(this._indicator);
 
+        this._settings.set_boolean('kmonad-running', false);
         if (this._settings.get_boolean('autostart-kmonad'))
             this._settings.set_boolean('kmonad-running', true);
     }
 
     disable() {
-        this._indicator.quickSettingsItems.forEach(item => item.destroy());
-        this._indicator.destroy();
-        this._indicator = null;
-        this._cancellable.cancel();
-        this._cancellable = null;
-        this._settings = null;
+        if (this._indicator) {
+            this._indicator.quickSettingsItems.forEach(item => item.destroy());
+            this._indicator.destroy();
+            this._indicator = null;
+        }
+        if (this._cancellable) {
+            this._cancellable.cancel();
+            this._cancellable = null;
+        }
+        if (this._handlerId) {
+            this._settings.disconnect(this._handlerId);
+            this._handlerId = null;
+        }
     }
 
     /**
@@ -114,7 +121,7 @@ export default class KMonadToggleExtension extends Extension {
         try {
             await execCommunicate(command, null, this._cancellable);
         } catch (e) {
-            if (!this._cancellable.is_cancelled())
+            if (this._cancellable?.is_cancelled() === false)
                 Main.notifyError(_('KMonad failed'), e.message.trim());
         } finally {
             this._settings.set_boolean('kmonad-running', false);
