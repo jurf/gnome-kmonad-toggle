@@ -2,7 +2,7 @@
   "name": "KMonad Toggle",
   "description": "Control KMonad directly from GNOME Shell!\n\nThis extension allows you to:\n • Autostart KMonad on login\n • Quickly check if KMonad is running from the top bar\n • Toggle KMonad on or off with a quick setting\n • Easily configure the KMonad launch command\n\nNote: This extension does not manage the KMonad installation. See the installation guide and FAQ in the KMonad repo for instructions on how to set it up. https://github.com/kmonad/kmonad",
   "uuid": "kmonad-toggle@jurf.github.io",
-  "shell-version": ["44"],
+  "shell-version": ["45"],
   "settings-schema": "org.gnome.shell.extensions.kmonad-toggle",
   "gettext-domain": "kmonad-toggle",
   "url": "https://github.com/jurf/gnome-kmonad-toggle",

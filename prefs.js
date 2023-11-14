@@ -20,59 +20,41 @@
 
 'use strict';
 
-const {Adw, Gio, Gtk} = imports.gi;
+import Adw from 'gi://Adw';
+import Gio from 'gi://Gio';
 
-const ExtensionUtils = imports.misc.extensionUtils;
+import {ExtensionPreferences, gettext as _} from 'resource:///org/gnome/Shell/Extensions/js/extensions/prefs.js';
 
-const _ = ExtensionUtils.gettext;
+export default class MyExtensionPreferences extends ExtensionPreferences {
+    fillPreferencesWindow(window) {
+        window._settings = this.getSettings();
 
-/**
- * Like `extension.js` this is used for any one-time setup like translations.
- */
-function init() {
-    ExtensionUtils.initTranslations();
-}
+        const page = new Adw.PreferencesPage();
+        window.add(page);
 
-/**
- * This function is called when the preferences window is first created to fill
- * the `Adw.PreferencesWindow`.
- *
- * This function will only be called by GNOME 42 and later. If this function is
- * present, `buildPrefsWidget()` will NOT be called.
- *
- * @param {Adw.PreferencesWindow} window - The preferences window
- */
-function fillPreferencesWindow(window) {
-    const settings = ExtensionUtils.getSettings();
+        const group = new Adw.PreferencesGroup({
+            description: _(
+                'This extension does not manage the KMonad installation.' +
+                ' See the <a href="https://github.com/kmonad/kmonad/blob/master/doc/installation.md">Installation guide</a>' +
+                ' and <a href="https://github.com/kmonad/kmonad/blob/master/doc/faq.md">FAQ</a>' +
+                ' for instructions on how to set it up.'
+            ),
+        });
+        page.add(group);
 
-    const page = new Adw.PreferencesPage();
-    window.add(page);
+        group.add(createSettingsToggle(window._settings, 'kmonad-running', 'Start KMonad now'));
+        group.add(createSettingsToggle(window._settings, 'autostart-kmonad', 'Autostart KMonad'));
 
-    const group = new Adw.PreferencesGroup({
-        description: _(
-            'This extension does not manage the KMonad installation.' +
-            ' See the <a href="https://github.com/kmonad/kmonad/blob/master/doc/installation.md">Installation guide</a>' +
-            ' and <a href="https://github.com/kmonad/kmonad/blob/master/doc/faq.md">FAQ</a>' +
-            ' for instructions on how to set it up.'
-        ),
-    });
-    page.add(group);
+        const kmonadGroup = new Adw.PreferencesGroup({
+            title: _('KMonad configuration'),
+            description: _(
+                'Shell expansion is not supported, so please use absolute paths.'
+            ),
+        });
+        page.add(kmonadGroup);
 
-    group.add(createSettingsToggle(settings, 'kmonad-running', 'Start KMonad now'));
-    group.add(createSettingsToggle(settings, 'autostart-kmonad', 'Autostart KMonad'));
-
-    const kmonadGroup = new Adw.PreferencesGroup({
-        title: _('KMonad configuration'),
-        description: _(
-            'Shell expansion is not supported, so please use absolute paths.'
-        ),
-    });
-    page.add(kmonadGroup);
-
-    kmonadGroup.add(createSettingsEntry(settings, 'kmonad-command', 'Custom command'));
-
-    // Make sure the window doesn't outlive the settings object
-    window._settings = settings;
+        kmonadGroup.add(createSettingsEntry(window._settings, 'kmonad-command', 'Custom command'));
+    }
 }
 
 /**
@@ -85,16 +67,12 @@ function fillPreferencesWindow(window) {
  * @returns {Adw.ActionRow} The row
  */
 function createSettingsToggle(settings, key, title) {
-    const row = new Adw.ActionRow({title: _(title)});
-
-    const toggle = new Gtk.Switch({
-        active: settings.get_boolean(key),
-        valign: Gtk.Align.CENTER,
+    const row = new Adw.SwitchRow({
+        title,
     });
-    settings.bind(key, toggle, 'active',
+
+    settings.bind(key, row, 'active',
         Gio.SettingsBindFlags.DEFAULT);
-    row.add_suffix(toggle);
-    row.activatable_widget = toggle;
 
     return row;
 }

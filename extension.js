@@ -20,169 +20,118 @@
 
 'use strict';
 
-const {Gio, GLib, GObject} = imports.gi;
+import Gio from 'gi://Gio';
+import GLib from 'gi://GLib';
+import GObject from 'gi://GObject';
 
-const ExtensionUtils = imports.misc.extensionUtils;
-const Me = ExtensionUtils.getCurrentExtension();
-const Main = imports.ui.main;
-const QuickSettings = imports.ui.quickSettings;
 
-const _ = ExtensionUtils.gettext;
+import {Extension, gettext as _} from 'resource:///org/gnome/shell/extensions/extension.js';
+import * as Main from 'resource:///org/gnome/shell/ui/main.js';
+import * as QuickSettings from 'resource:///org/gnome/shell/ui/quickSettings.js';
 
-// This is the live instance of the Quick Settings menu
-const QuickSettingsMenu = imports.ui.main.panel.statusArea.quickSettings;
 
 const KMonadToggle = GObject.registerClass(
-  class FeatureToggle extends QuickSettings.QuickToggle {
-      _init() {
-          super._init({
-              title: _('KMonad'),
-              gicon: getIcon(),
-              toggleMode: true,
-          });
+class FeatureToggle extends QuickSettings.QuickToggle {
+    _init(extensionObject, icon) {
+        super._init({
+            title: _('KMonad'),
+            gicon: icon,
+            toggleMode: true,
+        });
 
-          // NOTE: In GNOME 44, the `label` property must be set after
-          // construction. The newer `title` property can be set at construction.
-          this.label = _('KMonad');
-
-          this._settings = ExtensionUtils.getSettings();
-
-          this._settings.bind(
-              'kmonad-running',
-              this,
-              'checked',
-              Gio.SettingsBindFlags.DEFAULT
-          );
-      }
-  }
-);
-
-const KMonadIndicator = GObject.registerClass(
-  class FeatureIndicator extends QuickSettings.SystemIndicator {
-      _init() {
-          super._init();
-
-          // Create the icon for the indicator
-          this._indicator = this._addIndicator();
-          this._indicator.gicon = getIcon();
-
-          // Showing the indicator when the feature is enabled
-          this._settings = ExtensionUtils.getSettings();
-
-          this._settings.bind(
-              'kmonad-running',
-              this._indicator,
-              'visible',
-              Gio.SettingsBindFlags.DEFAULT
-          );
-
-          // Create the toggle and associate it with the indicator, being sure to
-          // destroy it along with the indicator
-          this.quickSettingsItems.push(new KMonadToggle());
-
-          this.connect('destroy', () => {
-              this.quickSettingsItems.forEach(item => item.destroy());
-          });
-
-          // Add the indicator to the panel and the toggle to the menu
-          QuickSettingsMenu._indicators.insert_child_at_index(this, 0);
-          addQuickSettingsItems(this.quickSettingsItems);
-      }
-  }
-);
-
-/**
- * Returns the KMonad symbolic icon
- */
-function getIcon() {
-    return Gio.icon_new_for_string(
-        GLib.build_filenamev([Me.path, 'icons', 'kmonad-symbolic.svg'])
-    );
-}
-
-/**
- * Adds the items to the Quick Settings menu above the Background Apps menu
- *
- * @param {Array} items - The items to add
- */
-function addQuickSettingsItems(items) {
-    // Add the items with the built-in function
-    QuickSettingsMenu._addItems(items);
-
-    // Ensure the tile(s) are above the background apps menu
-    for (const item of items) {
-        QuickSettingsMenu.menu._grid.set_child_below_sibling(
-            item,
-            QuickSettingsMenu._backgroundApps.quickSettingsItems[0]
+        this._settings = extensionObject.getSettings();
+        this._settings.bind(
+            'kmonad-running',
+            this,
+            'checked',
+            Gio.SettingsBindFlags.DEFAULT
         );
     }
 }
+);
 
-class Extension {
-    constructor(uuid) {
-        this._uuid = uuid;
+const KMonadIndicator = GObject.registerClass(
+class FeatureIndicator extends QuickSettings.SystemIndicator {
+    _init(extensionObject, icon) {
+        super._init();
 
-        this._indicator = null;
+        // Create the icon for the indicator
+        this._indicator = this._addIndicator();
+        this._indicator.gicon = icon;
 
-        this._settings = ExtensionUtils.getSettings();
-        this._cancellable = new Gio.Cancellable();
-
-        // Watch for changes to a specific setting
-        this._settings.connect('changed::kmonad-running', (settings, key) => {
-            const isEnabled = settings.get_boolean(key);
-            if (isEnabled)
-                this.startKmonad();
-            else
-                this._cancellable.cancel();
-        });
+        // Showing the indicator when the feature is enabled
+        this._settings = extensionObject.getSettings();
+        this._settings.bind(
+            'kmonad-running',
+            this._indicator,
+            'visible',
+            Gio.SettingsBindFlags.DEFAULT
+        );
     }
+}
+);
 
-    /**
-     * This function is called when your extension is enabled, which could be
-     * done in GNOME Extensions, when you log in or when the screen is unlocked.
-     *
-     * This is when you should setup any UI for your extension, change existing
-     * widgets, connect signals or modify GNOME Shell's behaviour.
-     */
+export default class KMonadToggleExtension extends Extension {
     enable() {
+        this._settings = this.getSettings();
+        // Watch for changes to a specific setting
+        this._handlerId = this._settings.connect('changed::kmonad-running', async (settings, key) => {
+            const isEnabled = settings.get_boolean(key);
+            if (isEnabled) {
+                this._cancellable = new Gio.Cancellable();
+                await this.startKmonad();
+            } else if (this._cancellable) {
+                this._cancellable.cancel();
+                this._cancellable = null;
+            }
+        });
+
+        this._indicator = new KMonadIndicator(this, this.getIcon());
+        this._indicator.quickSettingsItems.push(new KMonadToggle(this, this.getIcon()));
+        Main.panel.statusArea.quickSettings.addExternalIndicator(this._indicator);
+
         this._settings.set_boolean('kmonad-running', false);
-        this._indicator = new KMonadIndicator();
         if (this._settings.get_boolean('autostart-kmonad'))
             this._settings.set_boolean('kmonad-running', true);
     }
 
-    /**
-     * This function is called when your extension is uninstalled, disabled in
-     * GNOME Extensions, when you log out or when the screen locks.
-     *
-     * Anything you created, modified or setup in enable() MUST be undone here.
-     * Not doing so is the most common reason extensions are rejected in review!
-     */
     disable() {
-        this._indicator.destroy();
-        this._indicator = null;
-        this._cancellable.cancel();
+        if (this._indicator) {
+            this._indicator.quickSettingsItems.forEach(item => item.destroy());
+            this._indicator.destroy();
+            this._indicator = null;
+        }
+        if (this._cancellable) {
+            this._cancellable.cancel();
+            this._cancellable = null;
+        }
+        if (this._handlerId) {
+            this._settings.disconnect(this._handlerId);
+            this._handlerId = null;
+        }
     }
 
     /**
      * Starts the kmonad process
      */
-    startKmonad() {
-        this._cancellable.cancel();
-        this._cancellable.reset();
+    async startKmonad() {
         const command = GLib.shell_parse_argv(
             this._settings.get_string('kmonad-command')
         )[1];
-        execCommunicate(command, null, this._cancellable)
-                .catch(e => {
-                    if (!this._cancellable.is_cancelled()) {
-                        logError(e);
-                        Main.notifyError(_('KMonad failed'), e.message.trim());
-                    }
-                })
-                .then(() => {
-                    this._settings.set_boolean('kmonad-running', false);
-                });
+        try {
+            await execCommunicate(command, null, this._cancellable);
+        } catch (e) {
+            if (this._cancellable?.is_cancelled() === false)
+                Main.notifyError(_('KMonad failed'), e.message.trim());
+        } finally {
+            this._settings.set_boolean('kmonad-running', false);
+        }
+    }
+
+    getIcon() {
+        return Gio.icon_new_for_string(
+            GLib.build_filenamev([this.path, 'icons', 'kmonad-symbolic.svg'])
+        );
     }
 }
 
@@ -237,20 +186,4 @@ function execCommunicate(argv, input = null, cancellable = null) {
             }
         });
     });
-}
-
-/**
- * This function is called once when your extension is loaded, not enabled. This
- * is a good time to setup translations or anything else you only do once.
- *
- * You MUST NOT make any changes to GNOME Shell, connect any signals or add any
- * MainLoop sources here.
- *
- * @param {ExtensionMeta} meta - An extension meta object, described below.
- * @returns {object} an object with enable() and disable() methods
- */
-function init(meta) {
-    ExtensionUtils.initTranslations();
-
-    return new Extension(meta.uuid);
 }
