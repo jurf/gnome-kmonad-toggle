@@ -2,14 +2,15 @@
 
 # KMonad Toggle GNOME Shell Extension [![ESLint](https://github.com/jurf/gnome-kmonad-toggle/actions/workflows/eslint.yml/badge.svg)](https://github.com/jurf/gnome-kmonad-toggle/actions/workflows/eslint.yml)
 
-Control KMonad directly from GNOME Shell!
+Is your keyboard unusable for other people? Toggle it with one click!
 
 This extension allows you to:
-
+- Toggle KMonad on or off with a quick setting
 - Autostart KMonad on login
 - Quickly check if KMonad is running from the top bar
-- Toggle KMonad on or off with a quick setting
 - Easily configure the KMonad launch command
+
+Do you miss any functionality in this extension? Feel free to open an issue!
 
 **Note**: This extension does not manage the KMonad installation.  See the [Installation guide][kmonad-installation] and [FAQ][kmonad-faq] for instructions on how to set it up.
 
