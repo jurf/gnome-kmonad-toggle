@@ -2,7 +2,7 @@
   "name": "KMonad Toggle",
   "description": "Is your keyboard unusable for other people? Toggle it with one click!\n\nThis extension allows you to:\n • Toggle KMonad on or off with a quick setting\n • Autostart KMonad on login\n • Quickly check if KMonad is running from the top bar\n • Easily configure the KMonad launch command\n\nDo you miss any functionality in this extension? Feel free to open an issue on GitHub!\n\nNote: This extension does not manage the KMonad installation. See the installation guide and FAQ in the KMonad repo for instructions on how to set it up. https://github.com/kmonad/kmonad",
   "uuid": "kmonad-toggle@jurf.github.io",
-  "shell-version": ["45", "46", "47"],
+  "shell-version": ["45", "46", "47", "48"],
   "settings-schema": "org.gnome.shell.extensions.kmonad-toggle",
   "gettext-domain": "kmonad-toggle",
   "url": "https://github.com/jurf/gnome-kmonad-toggle",
